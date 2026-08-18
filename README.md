@@ -130,7 +130,7 @@ an unrelated branch — see the charter below.
 
 ## Team roster
 
-Joshua Guerrero
+Joshua
 
 <!-- Lesson 1 guide: each student adds their name here on their first pull request. -->
 
