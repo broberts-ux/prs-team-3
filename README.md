@@ -134,6 +134,8 @@ Joshua
 
 <!-- Lesson 1 guide: each student adds their name here on their first pull request. -->
 
+Justin New
+
 ## Sprint 1 assignments
 
 | Name | Ticket | What I want to get better at |
