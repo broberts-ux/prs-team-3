@@ -42,11 +42,7 @@ connection string, and yours may differ from your teammates'. Create it yourself
     }
   },
   "ConnectionStrings": {
-    "DevDb": "server=localhost\\sqlexpress;database=PrsTeamProject;trusted_connection=true;trustServerCertificate=true;"
-  }
-}
-```
-
+    "DevDb": "server=localhost\\sqlexpress;database=PrsTeamProject;trusted_cogit switch -c chore/<issue>-sprint1-assignment-<yourname>
 Adjust the server name if your SQL Server instance isn't `localhost\sqlexpress`.
 
 ### 2. Create the database
@@ -136,7 +132,7 @@ Brian
 
 ## Sprint 1 assignments
 
-| Name | Ticket | What I want to get better at |
+| Joshua | S1-B | Honest review permission, and the row action wording |
 | ---- | ------ | ---------------------------- |
 
 ---
