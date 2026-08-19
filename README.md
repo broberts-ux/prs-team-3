@@ -138,6 +138,7 @@ Brian
 
 | Name | Ticket | What I want to get better at |
 | ---- | ------ | ---------------------------- |
+| Brian | 2 | C sharp |
 
 ---
 
