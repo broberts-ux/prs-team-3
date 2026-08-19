@@ -14,8 +14,7 @@ of tickets, and a working agreement.
 
 Both projects live in **one** repository — most tickets change an endpoint _and_ the page
 that calls it, which is one branch, one pull request, one review.
-.adadadadada hfhafhahfaf
-
+.adadadadada hfhafhahfaf adadjahfjahfjdhfjsdhfjlshdjlf
 ---
 
 ## Getting it running
@@ -133,8 +132,7 @@ an unrelated branch — see the charter below.
 Joshua
 
 <!-- Lesson 1 guide: each student adds their name here on their first pull request. -->
-
-Justin New
+Brian
 
 ## Sprint 1 assignments
 
