@@ -15,6 +15,7 @@ of tickets, and a working agreement.
 Both projects live in **one** repository — most tickets change an endpoint _and_ the page
 that calls it, which is one branch, one pull request, one review.
 .adadadadada hfhafhahfaf adadjahfjahfjdhfjsdhfjlshdjlf
+
 ---
 
 ## Getting it running
@@ -42,11 +43,7 @@ connection string, and yours may differ from your teammates'. Create it yourself
     }
   },
   "ConnectionStrings": {
-    "DevDb": "server=localhost\\sqlexpress;database=PrsTeamProject;trusted_connection=true;trustServerCertificate=true;"
-  }
-}
-```
-
+    "DevDb": "server=localhost\\sqlexpress;database=PrsTeamProject;trusted_cogit switch -c chore/<issue>-sprint1-assignment-<yourname>
 Adjust the server name if your SQL Server instance isn't `localhost\sqlexpress`.
 
 ### 2. Create the database
@@ -132,12 +129,15 @@ an unrelated branch — see the charter below.
 Joshua
 
 <!-- Lesson 1 guide: each student adds their name here on their first pull request. -->
+
 Brian
 
 ## Sprint 1 assignments
 
-| Name | Ticket | What I want to get better at |
+| Joshua | S1-B | Honest review permission, and the row action wording |
 | ---- | ------ | ---------------------------- |
+
+Justin - Ticket S1-A - Using GitHub
 
 ---
 
