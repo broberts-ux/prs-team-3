@@ -136,6 +136,7 @@ Brian
 
 | Joshua | S1-B | Honest review permission, and the row action wording |
 | ---- | ------ | ---------------------------- |
+| Brian | 2 | C sharp |
 
 Justin - Ticket S1-A - Using GitHub
 
