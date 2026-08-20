@@ -19,9 +19,11 @@ interface IRejectionForm {
 function RequestDetailPage() {
   let { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(false);
   const [request, setRequest] = useState<IRequest | undefined>(undefined);
   const [showModal, setShowModal] = useState(false);
+
   const { user: authenticatedUser } = useUserContext();
 
   const {
@@ -30,7 +32,9 @@ function RequestDetailPage() {
     formState: { errors },
   } = useForm<IRejectionForm>({
     defaultValues: async function () {
-      return Promise.resolve({ rejectionReason: undefined });
+      return Promise.resolve({
+        rejectionReason: undefined,
+      });
     },
   });
 
@@ -39,7 +43,9 @@ function RequestDetailPage() {
 
   async function loadRequest() {
     let requestId = Number(id);
+
     setLoading(true);
+
     try {
       const request = await requestAPI.find(requestId);
       setRequest(request);
@@ -53,53 +59,66 @@ function RequestDetailPage() {
 
   async function review() {
     if (!request) return;
+
     setLoading(true);
+
     try {
       await requestAPI.review(request);
       toast.success("Successfully sent.");
     } catch (error: any) {
       toast.error(error.message);
-      throw new Error("An error occured sending the request to be reviewed.");
+      throw new Error("An error occurred sending the request to be reviewed.");
     } finally {
       setLoading(false);
     }
+
     navigate("/requests");
   }
 
   async function approve() {
     if (!request) return;
+
     setLoading(true);
+
     try {
       await requestAPI.approve(request);
       toast.success("Successfully saved.");
     } catch (error: any) {
       toast.error(error.message);
-      throw new Error("An error occured approving the request");
+      throw new Error("An error occurred approving the request");
     } finally {
       setLoading(false);
     }
+
     navigate("/requests");
   }
 
   function userCanReview() {
-    return request?.userId == authenticatedUser?.id;
+    return (
+      authenticatedUser?.isReviewer === true &&
+      request?.userId !== authenticatedUser?.id &&
+      request?.status === "REVIEW"
+    );
   }
 
   const save: SubmitHandler<IRejectionForm> = async (form: IRejectionForm) => {
     if (!request?.id || !form.rejectionReason) return;
+
     await reject(request.id, form.rejectionReason);
+
     setShowModal(false);
     navigate("/requests");
   };
 
   async function reject(requestId: number, rejectionReason: string) {
     setLoading(true);
+
     try {
       await requestAPI.reject(requestId, rejectionReason);
       toast.success("Successfully saved.");
     } catch (error: any) {
       toast.error(error.message);
-      throw new Error("An error occured rejecting the request");
+      throw new Error("An error occurred rejecting the request");
     } finally {
       setLoading(false);
     }
@@ -107,15 +126,18 @@ function RequestDetailPage() {
 
   async function removeLine(requestLine: IRequestLine) {
     if (!requestLine.id) return;
+
     await requestLineAPI.delete(requestLine.id);
 
     let requestWithLineRemoved = {
       ...request,
       requestLines: request?.requestLines.filter(
-        (l) => l.id === requestLine.id
+        (l) => l.id !== requestLine.id,
       ),
     } as IRequest;
+
     setRequest(requestWithLineRemoved);
+
     toast.success("Successfully deleted.");
   }
 
@@ -129,33 +151,39 @@ function RequestDetailPage() {
         <Modal.Header closeButton>
           <Modal.Title>Reject</Modal.Title>
         </Modal.Header>
+
         <Modal.Body>
           <form onSubmit={handleSubmit(save)}>
             <div className="mb-3">
               <label className="form-label" htmlFor="rejectionReason">
                 Rejection Reason
               </label>
+
               <textarea
                 {...register("rejectionReason", {
                   required: "Rejection reason is required",
                 })}
                 className={`form-control ${
                   errors?.rejectionReason && "is-invalid"
-                } `}
+                }`}
                 id="rejectionReason"
                 rows={6}
               ></textarea>
+
               <div className="invalid-feedback">
                 {errors?.rejectionReason?.message}
               </div>
             </div>
+
             <div className="d-flex justify-content-end gap-2">
               <button
+                type="button"
                 className="btn btn-outline-primary"
                 onClick={handleCloseModal}
               >
                 Cancel
               </button>
+
               <button type="submit" className="btn btn-primary">
                 <svg
                   className="bi pe-none me-2"
@@ -171,13 +199,18 @@ function RequestDetailPage() {
           </form>
         </Modal.Body>
       </Modal>
+
       {request?.status === "REVIEW" && !userCanReview() && (
         <div className="alert alert-warning">
-          You are not allowed to review your own requests.
+          {authenticatedUser?.isReviewer
+            ? "You are not allowed to review your own requests."
+            : "You must be a reviewer to approve or reject requests."}
         </div>
       )}
+
       <div className="d-flex justify-content-between pb-4 mb-4 border-bottom border-2">
         <h2>Request</h2>
+
         <div className="d-flex justify-content-end gap-2">
           {request?.status === "NEW" && (
             <button type="button" className="btn btn-primary" onClick={review}>
@@ -192,6 +225,7 @@ function RequestDetailPage() {
               Send for Review
             </button>
           )}
+
           {request?.status === "REVIEW" && (
             <>
               <button
@@ -210,6 +244,7 @@ function RequestDetailPage() {
                 </svg>
                 Approve
               </button>
+
               <button
                 type="button"
                 className="btn btn-outline-danger"
@@ -228,6 +263,7 @@ function RequestDetailPage() {
               </button>
             </>
           )}
+
           <div className="d-flex gap-2">
             <Link
               to={`/requests/edit/${request?.id}`}
@@ -245,8 +281,11 @@ function RequestDetailPage() {
           </div>
         </div>
       </div>
+
       {loading && <p>Loading...</p>}
+
       {request && <RequestHeader request={request} user={request.user} />}
+
       {request && (
         <RequestLineTable
           requestId={request.id}
@@ -259,3 +298,4 @@ function RequestDetailPage() {
 }
 
 export default RequestDetailPage;
+
