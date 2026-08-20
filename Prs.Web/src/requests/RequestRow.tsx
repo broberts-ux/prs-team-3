@@ -11,31 +11,47 @@ interface IRequestRowProps {
   onRemove: (request: IRequest) => void;
 }
 
-
-
 function RequestRow({ request, onRemove }: IRequestRowProps) {
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+
+  const canReview =
+    user?.isReviewer === true &&
+    request.user?.id !== user.id &&
+    request.status === "REVIEW";
+
   return (
     <tr>
       <th scope="row">{request.id}</th>
+
       <td>
-        {request.description} <br />
+        {request.description}
+        <br />
         <span className="text-body-secondary small text-wrap">
           {request.justification}
         </span>
       </td>
+
       <td>
         <span className={`badge ${getTextBackgroundByStatus(request.status)}`}>
           {request.status}
         </span>
       </td>
+
       <td>${request.total}</td>
+
       <td>
         {request.user?.firstName} {request.user?.lastName}
         <br />
         <span className="text-body-secondary small text-wrap">
           {request.deliveryMode}
         </span>
+        <br />
+        <span className="text-body-secondary small">
+          {canReview ? "Review" : "View only"}
+        </span>
       </td>
+
       <td>
         <Dropdown className="d-inline">
           <Dropdown.Toggle
@@ -52,18 +68,22 @@ function RequestRow({ request, onRemove }: IRequestRowProps) {
               <use xlinkHref={`${bootstrapIcons}#three-dots-vertical`} />
             </svg>
           </Dropdown.Toggle>
+
           <Dropdown.Menu>
             <Dropdown.Item as={Link} to={`/requests/detail/${request.id}`}>
-              Review
+              {canReview ? "Review" : "View"}
             </Dropdown.Item>
+
             <Dropdown.Item as={Link} to={`/requests/edit/${request.id}`}>
               Edit
             </Dropdown.Item>
+
             <Dropdown.Item
               as="a"
               href="#"
               onClick={async (event) => {
                 event.preventDefault();
+
                 if (confirm("Are you sure you want to delete this request?")) {
                   if (request.id) {
                     await requestAPI.delete(request.id);
