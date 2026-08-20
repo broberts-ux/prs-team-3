@@ -242,7 +242,7 @@ namespace Prs.Api.Migrations
             modelBuilder.Entity("Prs.Api.Models.Product", b =>
                 {
                     b.HasOne("Prs.Api.Models.Vendor", "Vendor")
-                        .WithMany()
+                        .WithMany("Products")
                         .HasForeignKey("VendorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -283,6 +283,11 @@ namespace Prs.Api.Migrations
             modelBuilder.Entity("Prs.Api.Models.Request", b =>
                 {
                     b.Navigation("RequestLines");
+                });
+
+            modelBuilder.Entity("Prs.Api.Models.Vendor", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }
