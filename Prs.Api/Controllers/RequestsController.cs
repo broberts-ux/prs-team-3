@@ -14,19 +14,22 @@ namespace Prs.Api.Controllers {
             _db = db;
         }
 
-        // GET: api/Requests
+// GET: api/Requests
         // GET: api/Requests?status=NEW
-        // GET: api/Requests?status=REVIEW
-        // GET: api/Requests?status=APPROVED
-        // GET: api/Requests?status=REJECTED
+        // GET: api/Requests?userId=2
+        // GET: api/Requests?status=NEW&userId=2
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Request>>> GetAll([FromQuery] string? status = null) {
+        public async Task<ActionResult<IEnumerable<Request>>> GetAll([FromQuery] string? status = null, [FromQuery] int? userId = null) {
             var query = _db.Requests
                            .Include(request => request.User)
                            .AsQueryable();
 
             if (status != null) {
-                query = query.Where(request => request.Status != status);
+                query = query.Where(request => request.Status == status);
+            }
+
+            if (userId != null) {
+                query = query.Where(request => request.UserId == userId);
             }
 
             return await query.ToListAsync();
