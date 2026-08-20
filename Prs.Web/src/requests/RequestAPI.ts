@@ -4,9 +4,12 @@ import { IRequest } from "./IRequest";
 const url = `${BASE_URL}/requests`;
 
 export const requestAPI = {
-  list(status?: string): Promise<IRequest[]> {
-    let requestsUrl = `${url}`;
-    if (status) requestsUrl += `?status=${status.toUpperCase()}`;
+  list: async (status?: string, userId?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.append("status", status.toUpperCase());
+    if (userId) params.append("userId", userId);
+    const queryString = params.toString();
+    const requestsUrl = queryString ? `${url}?${queryString}` : url;
     return fetch(requestsUrl).then(checkStatus).then(parseJSON);
   },
 
