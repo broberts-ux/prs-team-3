@@ -5,9 +5,11 @@ using Prs.Api.Data;
 using Prs.Api.Models;
 
 namespace Prs.Api.Controllers {
+
     [Route("api/[controller]")]
     [ApiController]
     public class VendorsController : ControllerBase {
+
         private readonly PrsDbContext _db;
 
         public VendorsController(PrsDbContext db) {
@@ -17,13 +19,17 @@ namespace Prs.Api.Controllers {
         // GET: api/Vendors
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Vendor>>> GetAll() {
+
             return await _db.Vendors.ToListAsync();
         }
 
         // GET: api/Vendors/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Vendor>> GetById(int id) {
-            var vendor = await _db.Vendors.FindAsync(id);
+
+            var vendor = await _db.Vendors
+                .Include(v => v.Products)
+                .FirstOrDefaultAsync(v => v.Id == id);
 
             if (vendor == null) {
                 return NotFound();
@@ -35,25 +41,40 @@ namespace Prs.Api.Controllers {
         // POST: api/Vendors
         [HttpPost]
         public async Task<ActionResult<Vendor>> Create(Vendor newVendor) {
+
             _db.Vendors.Add(newVendor);
+
             await _db.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetById), new { id = newVendor.Id }, newVendor);
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = newVendor.Id },
+                newVendor
+            );
         }
 
         // PUT: api/Vendors/5
         [HttpPut("{id}")]
-        public async Task<ActionResult<Vendor>> Update(int id, Vendor updatedVendor) {
+        public async Task<ActionResult<Vendor>> Update(
+            int id,
+            Vendor updatedVendor
+        ) {
+
             if (id != updatedVendor.Id) {
                 return BadRequest();
             }
 
             var currentVendor = await _db.Vendors.FindAsync(id);
+
             if (currentVendor == null) {
                 return NotFound();
             }
 
-            _db.Entry(currentVendor).CurrentValues.SetValues(updatedVendor);
+            _db.Entry(currentVendor)
+                .CurrentValues
+                .SetValues(updatedVendor);
+
+            await _db.SaveChangesAsync();
 
             return Ok(currentVendor);
         }
@@ -61,12 +82,15 @@ namespace Prs.Api.Controllers {
         // DELETE: api/Vendors/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id) {
+
             var vendor = await _db.Vendors.FindAsync(id);
+
             if (vendor == null) {
                 return NotFound();
             }
 
             _db.Vendors.Remove(vendor);
+
             await _db.SaveChangesAsync();
 
             return NoContent();
