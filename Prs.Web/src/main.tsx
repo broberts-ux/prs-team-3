@@ -2,13 +2,16 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
+
 import VendorsPage from "./vendors/VendorsPage";
+import VendorCreatePage from "./vendors/VendorCreatePage.tsx";
+import VendorEditPage from "./vendors/VendorEditPage.tsx";
+import VendorDetailPage from "./vendors/VendorDetailPage.tsx";
+
 import ErrorPage from "./ErrorPage.tsx";
 import UsersPage from "./users/UsersPage.tsx";
 import ProductsPage from "./products/ProductsPage.tsx";
 import RequestsPage from "./requests/RequestsPage.tsx";
-import VendorCreatePage from "./vendors/VendorCreatePage.tsx";
-import VendorEditPage from "./vendors/VendorEditPage.tsx";
 import ProductCreatePage from "./products/ProductCreatePage.tsx";
 import ProductEditPage from "./products/ProductEditPage.tsx";
 import UserCreatePage from "./users/UserCreatePage.tsx";
@@ -28,11 +31,18 @@ const router = createBrowserRouter([
     element: <App />,
     errorElement: <ErrorPage />,
     children: [
-      { path: "signin", element: <SignInPage /> },
+      {
+        path: "signin",
+        element: <SignInPage />,
+      },
       {
         element: <Layout />,
         children: [
-          { index: true, element: <IndexPage /> },
+          {
+            index: true,
+            element: <IndexPage />,
+          },
+
           {
             path: "requests",
             element: <RequestsPage />,
@@ -57,6 +67,7 @@ const router = createBrowserRouter([
             path: "requests/detail/:id/requestline/edit/:lineId",
             element: <RequestLineEditPage />,
           },
+
           {
             path: "products",
             element: <ProductsPage />,
@@ -69,6 +80,7 @@ const router = createBrowserRouter([
             path: "products/edit/:id",
             element: <ProductEditPage />,
           },
+
           {
             path: "vendors",
             element: <VendorsPage />,
@@ -78,9 +90,14 @@ const router = createBrowserRouter([
             element: <VendorCreatePage />,
           },
           {
+            path: "vendors/detail/:id",
+            element: <VendorDetailPage />,
+          },
+          {
             path: "vendors/edit/:id",
             element: <VendorEditPage />,
           },
+
           {
             path: "users",
             element: <UsersPage />,
