@@ -14,6 +14,8 @@ function RequestTable() {
   const [allUsers, setAllUsers] = useState<IUser[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const searchTerm = searchParams.get("search");
+
   useEffect(() => {
     async function loadUsers() {
       try {
@@ -28,12 +30,7 @@ function RequestTable() {
 
   async function loadRequests() {
     try {
-      const data = await requestAPI.list(
-        searchParams.get("status") ?? undefined,
-        searchParams.get("userId") ?? undefined,
-        searchParams.get("search") ?? undefined,
-        searchParams.get("sort") ?? undefined,
-      );
+      const data = await requestAPI.list(searchParams.get("status") ?? undefined, searchParams.get("userId") ?? undefined, searchTerm ?? undefined, searchParams.get("sort") ?? undefined);
       setRequests(data);
     } catch (error: any) {
       toast.error(error.message, { duration: 6000 });
@@ -42,7 +39,7 @@ function RequestTable() {
 
   useEffect(() => {
     loadRequests();
-  }, [searchParams.get("status"), searchParams.get("userId"), searchParams.get("search"), searchParams.get("sort")]);
+  }, [searchParams.get("status"), searchParams.get("userId"), searchTerm, searchParams.get("sort")]);
 
   function removeRequest(request: IRequest) {
     setRequests(requests.filter((r) => r.id !== request.id));
@@ -115,11 +112,12 @@ function RequestTable() {
               className="form-control border-start-0 ps-0"
               style={{ boxShadow: "none", borderColor: "#dee2e6" }}
               placeholder="Search..."
-              value={searchParams.get("search") ?? ""}
+              value={searchTerm ?? ""}
               onChange={handleSearchChange}
             />
           </div>
         </div>
+
         <div className="d-flex flex-column" style={{ width: "200px" }}>
           <label htmlFor="status" className="form-label text-secondary mb-1">
             Status
@@ -132,6 +130,7 @@ function RequestTable() {
             <option value="REJECTED">Rejected</option>
           </select>
         </div>
+
         <div className="d-flex flex-column" style={{ width: "250px" }}>
           <label htmlFor="userId" className="form-label text-secondary mb-1">
             Requested by
@@ -155,29 +154,40 @@ function RequestTable() {
       </div>
 
       <section className="list d-flex flex-row flex-wrap bg-body-tertiary gap-5 p-4 rounded-4">
-        <table className="table table-hover w-100 table rounded-4">
-          <thead>
-            <tr>
-              <th scope="col">#</th>
-              <th scope="col">Description</th>
-
-              <th scope="col" style={{ cursor: "pointer", userSelect: "none" }} onClick={() => handleSortToggle("status")}>
-                Status{getSortIndicator("status")}
-              </th>
-              <th scope="col" style={{ cursor: "pointer", userSelect: "none" }} onClick={() => handleSortToggle("total")}>
-                Total{getSortIndicator("total")}
-              </th>
-
-              <th scope="col">Requested By</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((request) => (
-              <RequestRow key={request.id} request={request} onRemove={removeRequest} />
-            ))}
-          </tbody>
-        </table>
+        {requests.length === 0 && searchTerm ? (
+          <div className="d-flex flex-column align-items-center justify-content-center text-secondary w-100 py-5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="mb-3 opacity-50" viewBox="0 0 16 16">
+              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+            </svg>
+            <p className="mb-0">No requests match "{searchTerm}". Try a different word, or clear the search.</p>
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="d-flex flex-column align-items-center justify-content-center text-secondary w-100 py-5">
+            <p className="mb-0">No requests found.</p>
+          </div>
+        ) : (
+          <table className="table table-hover w-100 table rounded-4 mb-0">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Description</th>
+                <th scope="col" style={{ cursor: "pointer", userSelect: "none" }} onClick={() => handleSortToggle("status")}>
+                  Status{getSortIndicator("status")}
+                </th>
+                <th scope="col" style={{ cursor: "pointer", userSelect: "none" }} onClick={() => handleSortToggle("total")}>
+                  Total{getSortIndicator("total")}
+                </th>
+                <th scope="col">Requested By</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((request) => (
+                <RequestRow key={request.id} request={request} onRemove={removeRequest} />
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
     </>
   );
