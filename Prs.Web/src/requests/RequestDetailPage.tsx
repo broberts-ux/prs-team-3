@@ -93,7 +93,6 @@ function RequestDetailPage() {
     navigate("/requests");
   }
 
-  // ✨ The flawless predicate logic!
   function userCanReview() {
     return authenticatedUser?.isReviewer === true && request?.userId !== authenticatedUser?.id && request?.status === "REVIEW";
   }
