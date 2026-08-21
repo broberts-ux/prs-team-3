@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { requestAPI } from "./RequestAPI";
 import toast from "react-hot-toast";
 import { getTextBackgroundByStatus } from "../utility/formatUtilities";
-import { useUserContext } from "../App"; // ✨ Bring in the context!
+import { useUserContext } from "../App";
 
 interface IRequestRowProps {
   request: IRequest;
@@ -13,10 +13,7 @@ interface IRequestRowProps {
 }
 
 function RequestRow({ request, onRemove }: IRequestRowProps) {
-  // ✨ Use context instead of localStorage!
   const { user } = useUserContext();
-
-  // ✨ Added the optional chaining to user?.id so it doesn't crash!
   const canReview = user?.isReviewer === true && request.user?.id !== user?.id && request.status === "REVIEW";
 
   return (
