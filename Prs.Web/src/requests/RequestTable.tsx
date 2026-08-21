@@ -8,17 +8,50 @@ import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useUserContext } from "../App";
 
+const FILTER_STORAGE_KEY = "requestFilters";
+
 function RequestTable() {
   const { user } = useUserContext();
   const [requests, setRequests] = useState<IRequest[]>([]);
   const [allUsers, setAllUsers] = useState<IUser[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [filtersInitialized, setFiltersInitialized] = useState(false);
 
   const searchTerm = searchParams.get("search");
   const status = searchParams.get("status");
   const userId = searchParams.get("userId");
   const excludeUserId = searchParams.get("excludeUserId");
   const sort = searchParams.get("sort");
+
+  useEffect(() => {
+    const currentParams = searchParams.toString();
+
+    if (currentParams) {
+      sessionStorage.setItem(FILTER_STORAGE_KEY, currentParams);
+    } else {
+      const rememberedFilters = sessionStorage.getItem(FILTER_STORAGE_KEY);
+
+      if (rememberedFilters) {
+        setSearchParams(new URLSearchParams(rememberedFilters), {
+          replace: true,
+        });
+      }
+    }
+
+    setFiltersInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (!filtersInitialized) return;
+
+    const currentParams = searchParams.toString();
+
+    if (currentParams) {
+      sessionStorage.setItem(FILTER_STORAGE_KEY, currentParams);
+    } else {
+      sessionStorage.removeItem(FILTER_STORAGE_KEY);
+    }
+  }, [searchParams, filtersInitialized]);
 
   useEffect(() => {
     async function loadUsers() {
@@ -38,6 +71,10 @@ function RequestTable() {
   async function loadRequests() {
     try {
       const data = await requestAPI.list(
+        searchParams.get("status") ?? undefined,
+        searchParams.get("userId") ?? undefined,
+        searchTerm ?? undefined,
+        searchParams.get("sort") ?? undefined,
         status ?? undefined,
         userId ?? undefined,
         excludeUserId ?? undefined,
@@ -52,7 +89,16 @@ function RequestTable() {
   }
 
   useEffect(() => {
+    if (!filtersInitialized) return;
+
     loadRequests();
+  }, [
+    filtersInitialized,
+    searchParams.get("status"),
+    searchParams.get("userId"),
+    searchTerm,
+    searchParams.get("sort"),
+  ]);
   }, [status, userId, excludeUserId, searchTerm, sort]);
 
   function removeRequest(request: IRequest) {
@@ -74,6 +120,13 @@ function RequestTable() {
   }
 
   function handleRequesterChange(event: SyntheticEvent) {
+    const newUserId = (event.target as HTMLSelectElement).value;
+
+    setSearchParams((prevParams) => {
+      if (newUserId) {
+        prevParams.set("userId", newUserId);
+      } else {
+        prevParams.delete("userId");
     const selectedValue = (event.target as HTMLSelectElement).value;
 
     setSearchParams((prevParams) => {
@@ -107,6 +160,7 @@ function RequestTable() {
   function handleSortToggle(column: string) {
     setSearchParams((prevParams) => {
       const currentSort = prevParams.get("sort");
+
       let newSort = `${column}_asc`;
 
       if (currentSort === `${column}_asc`) {
@@ -119,7 +173,16 @@ function RequestTable() {
     });
   }
 
+  function handleClearFilters() {
+    sessionStorage.removeItem(FILTER_STORAGE_KEY);
+    setSearchParams({});
+  }
+
   function getSortIndicator(column: string) {
+    const sort = searchParams.get("sort");
+
+    if (sort === `${column}_asc`) return " ↑";
+    if (sort === `${column}_desc`) return " ↓";
     const currentSort = searchParams.get("sort");
 
     if (currentSort === `${column}_asc`) {
@@ -133,6 +196,7 @@ function RequestTable() {
     return "";
   }
 
+  const hasFilters = searchParams.toString().length > 0;
   function getRequesterValue() {
     if (excludeUserId) {
       return "anyone-else";
@@ -143,7 +207,7 @@ function RequestTable() {
 
   return (
     <>
-      <div className="d-flex flex-row gap-3 mb-4 w-100">
+      <div className="d-flex flex-row gap-3 mb-4 w-100 align-items-end">
         <div className="d-flex flex-column flex-grow-1">
           <label
             htmlFor="search"
@@ -194,6 +258,7 @@ function RequestTable() {
           <select
             id="status"
             className="form-select"
+            value={searchParams.get("status") ?? ""}
             value={status ?? ""}
             onChange={handleStatusChange}
           >
@@ -219,6 +284,7 @@ function RequestTable() {
           <select
             id="userId"
             className="form-select"
+            value={searchParams.get("userId") ?? ""}
             value={getRequesterValue()}
             onChange={handleRequesterChange}
           >
@@ -243,6 +309,15 @@ function RequestTable() {
               ))}
           </select>
         </div>
+
+        <button
+          type="button"
+          className="btn btn-outline-secondary"
+          onClick={handleClearFilters}
+          disabled={!hasFilters}
+        >
+          Clear filters
+        </button>
       </div>
 
       <section className="list d-flex flex-row flex-wrap bg-body-tertiary gap-5 p-4 rounded-4">
@@ -260,6 +335,8 @@ function RequestTable() {
             </svg>
 
             <p className="mb-0">
+              No requests match "{searchTerm}". Try a different word, or clear
+              the search.
               No requests match "{searchTerm}". Try a different word, or
               clear the search.
             </p>
