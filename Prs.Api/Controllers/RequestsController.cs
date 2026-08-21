@@ -14,22 +14,46 @@ namespace Prs.Api.Controllers {
             _db = db;
         }
 
-// GET: api/Requests
+        // GET: api/Requests
         // GET: api/Requests?status=NEW
         // GET: api/Requests?userId=2
-        // GET: api/Requests?status=NEW&userId=2
+        // GET: api/Requests?search=laptop&sort=total_desc
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Request>>> GetAll([FromQuery] string? status = null, [FromQuery] int? userId = null) {
+        public async Task<ActionResult<IEnumerable<Request>>> GetAll(
+            [FromQuery] string? status = null,
+            [FromQuery] int? userId = null,
+            [FromQuery] string? search = null,
+            [FromQuery] string? sort = null)
+        {
+
             var query = _db.Requests
                            .Include(request => request.User)
                            .AsQueryable();
-
-            if (status != null) {
+            if (status != null)
+            {
                 query = query.Where(request => request.Status == status);
             }
-
-            if (userId != null) {
+            if (userId != null)
+            {
                 query = query.Where(request => request.UserId == userId);
+            }
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                query = query.Where(request =>
+                    (request.Description != null && request.Description.Contains(search)) ||
+                    (request.Justification != null && request.Justification.Contains(search))
+                );
+            }
+            if (!string.IsNullOrWhiteSpace(sort))
+            {
+                query = sort switch
+                {
+                    "status_asc" => query.OrderBy(request => request.Status),
+                    "status_desc" => query.OrderByDescending(request => request.Status),
+                    "total_asc" => query.OrderBy(request => request.Total),
+                    "total_desc" => query.OrderByDescending(request => request.Total),
+                    _ => query
+                };
             }
 
             return await query.ToListAsync();

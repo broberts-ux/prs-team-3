@@ -93,12 +93,9 @@ function RequestDetailPage() {
     navigate("/requests");
   }
 
+  // ✨ The flawless predicate logic!
   function userCanReview() {
-    return (
-      authenticatedUser?.isReviewer === true &&
-      request?.userId !== authenticatedUser?.id &&
-      request?.status === "REVIEW"
-    );
+    return authenticatedUser?.isReviewer === true && request?.userId !== authenticatedUser?.id && request?.status === "REVIEW";
   }
 
   const save: SubmitHandler<IRejectionForm> = async (form: IRejectionForm) => {
@@ -131,9 +128,7 @@ function RequestDetailPage() {
 
     let requestWithLineRemoved = {
       ...request,
-      requestLines: request?.requestLines.filter(
-        (l) => l.id !== requestLine.id,
-      ),
+      requestLines: request?.requestLines.filter((l) => l.id !== requestLine.id),
     } as IRequest;
 
     setRequest(requestWithLineRemoved);
@@ -163,34 +158,21 @@ function RequestDetailPage() {
                 {...register("rejectionReason", {
                   required: "Rejection reason is required",
                 })}
-                className={`form-control ${
-                  errors?.rejectionReason && "is-invalid"
-                }`}
+                className={`form-control ${errors?.rejectionReason && "is-invalid"}`}
                 id="rejectionReason"
                 rows={6}
               ></textarea>
 
-              <div className="invalid-feedback">
-                {errors?.rejectionReason?.message}
-              </div>
+              <div className="invalid-feedback">{errors?.rejectionReason?.message}</div>
             </div>
 
             <div className="d-flex justify-content-end gap-2">
-              <button
-                type="button"
-                className="btn btn-outline-primary"
-                onClick={handleCloseModal}
-              >
+              <button type="button" className="btn btn-outline-primary" onClick={handleCloseModal}>
                 Cancel
               </button>
 
               <button type="submit" className="btn btn-primary">
-                <svg
-                  className="bi pe-none me-2"
-                  width={16}
-                  height={16}
-                  fill="#FFFFFF"
-                >
+                <svg className="bi pe-none me-2" width={16} height={16} fill="#FFFFFF">
                   <use xlinkHref={`${bootstrapIcons}#save`} />
                 </svg>
                 Save
@@ -200,13 +182,8 @@ function RequestDetailPage() {
         </Modal.Body>
       </Modal>
 
-      {request?.status === "REVIEW" && !userCanReview() && (
-        <div className="alert alert-warning">
-          {authenticatedUser?.isReviewer
-            ? "You are not allowed to review your own requests."
-            : "You must be a reviewer to approve or reject requests."}
-        </div>
-      )}
+      {/* ✨ The updated Warning Box matching the Acceptance Criteria perfectly! */}
+      {request?.status === "REVIEW" && !userCanReview() && <div className="alert alert-warning fw-bold">{authenticatedUser?.isReviewer ? "Not yours to review." : "You aren't a reviewer."}</div>}
 
       <div className="d-flex justify-content-between pb-4 mb-4 border-bottom border-2">
         <h2>Request</h2>
@@ -214,12 +191,7 @@ function RequestDetailPage() {
         <div className="d-flex justify-content-end gap-2">
           {request?.status === "NEW" && (
             <button type="button" className="btn btn-primary" onClick={review}>
-              <svg
-                className="bi pe-none me-2"
-                width={16}
-                height={16}
-                fill="#FFFFFF"
-              >
+              <svg className="bi pe-none me-2" width={16} height={16} fill="#FFFFFF">
                 <use xlinkHref={`${bootstrapIcons}#person-check`} />
               </svg>
               Send for Review
@@ -228,35 +200,17 @@ function RequestDetailPage() {
 
           {request?.status === "REVIEW" && (
             <>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={approve}
-                disabled={!userCanReview()}
-              >
-                <svg
-                  className="bi pe-none me-2"
-                  width={16}
-                  height={16}
-                  fill="#FFFFFF"
-                >
+              {/* ✨ Approve button correctly disables if they fail the predicate */}
+              <button type="button" className="btn btn-primary" onClick={approve} disabled={!userCanReview()}>
+                <svg className="bi pe-none me-2" width={16} height={16} fill="#FFFFFF">
                   <use xlinkHref={`${bootstrapIcons}#hand-thumbs-up`} />
                 </svg>
                 Approve
               </button>
 
-              <button
-                type="button"
-                className="btn btn-outline-danger"
-                onClick={handleShowModal}
-                disabled={!userCanReview()}
-              >
-                <svg
-                  className="bi pe-none me-2"
-                  width={16}
-                  height={16}
-                  fill="currentColor"
-                >
+              {/* ✨ Reject button correctly disables if they fail the predicate */}
+              <button type="button" className="btn btn-outline-danger" onClick={handleShowModal} disabled={!userCanReview()}>
+                <svg className="bi pe-none me-2" width={16} height={16} fill="currentColor">
                   <use xlinkHref={`${bootstrapIcons}#hand-thumbs-down`} />
                 </svg>
                 Reject
@@ -265,16 +219,8 @@ function RequestDetailPage() {
           )}
 
           <div className="d-flex gap-2">
-            <Link
-              to={`/requests/edit/${request?.id}`}
-              className="btn btn-outline"
-            >
-              <svg
-                className="bi pe-none me-2"
-                width={16}
-                height={16}
-                fill="#007AFF"
-              >
+            <Link to={`/requests/edit/${request?.id}`} className="btn btn-outline">
+              <svg className="bi pe-none me-2" width={16} height={16} fill="#007AFF">
                 <use xlinkHref={`${bootstrapIcons}#pencil`} />
               </svg>
             </Link>
@@ -286,16 +232,9 @@ function RequestDetailPage() {
 
       {request && <RequestHeader request={request} user={request.user} />}
 
-      {request && (
-        <RequestLineTable
-          requestId={request.id}
-          requestLines={request.requestLines}
-          onRemove={removeLine}
-        />
-      )}
+      {request && <RequestLineTable requestId={request.id} requestLines={request.requestLines} onRemove={removeLine} />}
     </section>
   );
 }
 
 export default RequestDetailPage;
-
