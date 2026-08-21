@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { requestAPI } from "./RequestAPI";
 import toast from "react-hot-toast";
 import { getTextBackgroundByStatus } from "../utility/formatUtilities";
+import { useUserContext } from "../App";
 
 interface IRequestRowProps {
   request: IRequest;
@@ -12,13 +13,8 @@ interface IRequestRowProps {
 }
 
 function RequestRow({ request, onRemove }: IRequestRowProps) {
-  const storedUser = localStorage.getItem("user");
-  const user = storedUser ? JSON.parse(storedUser) : null;
-
-  const canReview =
-    user?.isReviewer === true &&
-    request.user?.id !== user.id &&
-    request.status === "REVIEW";
+  const { user } = useUserContext();
+  const canReview = user?.isReviewer === true && request.user?.id !== user?.id && request.status === "REVIEW";
 
   return (
     <tr>
@@ -27,15 +23,11 @@ function RequestRow({ request, onRemove }: IRequestRowProps) {
       <td>
         {request.description}
         <br />
-        <span className="text-body-secondary small text-wrap">
-          {request.justification}
-        </span>
+        <span className="text-body-secondary small text-wrap">{request.justification}</span>
       </td>
 
       <td>
-        <span className={`badge ${getTextBackgroundByStatus(request.status)}`}>
-          {request.status}
-        </span>
+        <span className={`badge ${getTextBackgroundByStatus(request.status)}`}>{request.status}</span>
       </td>
 
       <td>${request.total}</td>
@@ -43,28 +35,13 @@ function RequestRow({ request, onRemove }: IRequestRowProps) {
       <td>
         {request.user?.firstName} {request.user?.lastName}
         <br />
-        <span className="text-body-secondary small text-wrap">
-          {request.deliveryMode}
-        </span>
-        <br />
-        <span className="text-body-secondary small">
-          {canReview ? "Review" : "View only"}
-        </span>
+        <span className="text-body-secondary small text-wrap">{request.deliveryMode}</span>
       </td>
 
       <td>
         <Dropdown className="d-inline">
-          <Dropdown.Toggle
-            variant="light"
-            className="no-caret"
-            style={{ background: "none" }}
-          >
-            <svg
-              className="bi pe-none me-2"
-              width={20}
-              height={20}
-              fill="#007AFF"
-            >
+          <Dropdown.Toggle variant="light" className="no-caret" style={{ background: "none" }}>
+            <svg className="bi pe-none me-2" width={20} height={20} fill="#007AFF">
               <use xlinkHref={`${bootstrapIcons}#three-dots-vertical`} />
             </svg>
           </Dropdown.Toggle>
