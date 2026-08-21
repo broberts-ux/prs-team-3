@@ -14,7 +14,7 @@ namespace Prs.Api.Controllers {
             _db = db;
         }
 
-        // GET: api/Requests
+// GET: api/Requests
         // GET: api/Requests?status=NEW
         // GET: api/Requests?userId=2
         // GET: api/Requests?search=laptop&sort=total_desc
@@ -22,6 +22,7 @@ namespace Prs.Api.Controllers {
         public async Task<ActionResult<IEnumerable<Request>>> GetAll(
             [FromQuery] string? status = null,
             [FromQuery] int? userId = null,
+            [FromQuery] int? excludeUserId = null, // ✨ Added to catch the query param!
             [FromQuery] string? search = null,
             [FromQuery] string? sort = null)
         {
@@ -33,9 +34,17 @@ namespace Prs.Api.Controllers {
             {
                 query = query.Where(request => request.Status == status);
             }
+            if (excludeUserId != null) {
+             query = query.Where(request => request.UserId != excludeUserId);
+            }
             if (userId != null)
             {
                 query = query.Where(request => request.UserId == userId);
+            }
+            if (excludeUserId != null)
+            {
+                // ✨ Excludes the signed-in reviewer's own requests!
+                query = query.Where(request => request.UserId != excludeUserId);
             }
             if (!string.IsNullOrWhiteSpace(search))
             {

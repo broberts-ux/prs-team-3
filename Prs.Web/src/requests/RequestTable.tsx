@@ -23,6 +23,10 @@ function RequestTable() {
   const excludeUserId = searchParams.get("excludeUserId");
   const sort = searchParams.get("sort");
 
+  const isEverything = !status && !userId && !excludeUserId;
+  const isSubmittedByYou = userId === String(user?.id) && !status && !excludeUserId;
+  const isAwaitingReview = status === "REVIEW" && excludeUserId === String(user?.id) && !userId;
+
   useEffect(() => {
     const currentParams = searchParams.toString();
 
@@ -87,16 +91,48 @@ function RequestTable() {
     setRequests(requests.filter((r) => r.id !== request.id));
   }
 
+  // ✨ Using `new URLSearchParams()` forces React Router to update the URL properly!
+  function handleEverythingClick() {
+    setSearchParams((prevParams) => {
+      const next = new URLSearchParams(prevParams);
+      next.delete("status");
+      next.delete("userId");
+      next.delete("excludeUserId");
+      return next;
+    });
+  }
+
+  function handleSubmittedByYouClick() {
+    setSearchParams((prevParams) => {
+      const next = new URLSearchParams(prevParams);
+      next.delete("status");
+      next.delete("excludeUserId");
+      if (user?.id) next.set("userId", String(user.id));
+      return next;
+    });
+  }
+
+  function handleAwaitingReviewClick() {
+    setSearchParams((prevParams) => {
+      const next = new URLSearchParams(prevParams);
+      next.delete("userId");
+      next.set("status", "REVIEW");
+      if (user?.id) next.set("excludeUserId", String(user.id));
+      return next;
+    });
+  }
+
   function handleStatusChange(event: SyntheticEvent) {
     const newStatus = (event.target as HTMLSelectElement).value;
 
     setSearchParams((prevParams) => {
+      const next = new URLSearchParams(prevParams);
       if (newStatus) {
-        prevParams.set("status", newStatus);
+        next.set("status", newStatus);
       } else {
-        prevParams.delete("status");
+        next.delete("status");
       }
-      return prevParams;
+      return next;
     });
   }
 
@@ -104,16 +140,17 @@ function RequestTable() {
     const selectedValue = (event.target as HTMLSelectElement).value;
 
     setSearchParams((prevParams) => {
-      prevParams.delete("userId");
-      prevParams.delete("excludeUserId");
+      const next = new URLSearchParams(prevParams);
+      next.delete("userId");
+      next.delete("excludeUserId");
 
       if (selectedValue === "anyone-else" && user?.id) {
-        prevParams.set("excludeUserId", String(user.id));
+        next.set("excludeUserId", String(user.id));
       } else if (selectedValue) {
-        prevParams.set("userId", selectedValue);
+        next.set("userId", selectedValue);
       }
 
-      return prevParams;
+      return next;
     });
   }
 
@@ -121,26 +158,28 @@ function RequestTable() {
     const newSearch = (event.target as HTMLInputElement).value;
 
     setSearchParams((prevParams) => {
+      const next = new URLSearchParams(prevParams);
       if (newSearch) {
-        prevParams.set("search", newSearch);
+        next.set("search", newSearch);
       } else {
-        prevParams.delete("search");
+        next.delete("search");
       }
-      return prevParams;
+      return next;
     });
   }
 
   function handleSortToggle(column: string) {
     setSearchParams((prevParams) => {
-      const currentSort = prevParams.get("sort");
+      const next = new URLSearchParams(prevParams);
+      const currentSort = next.get("sort");
       let newSort = `${column}_asc`;
 
       if (currentSort === `${column}_asc`) {
         newSort = `${column}_desc`;
       }
 
-      prevParams.set("sort", newSort);
-      return prevParams;
+      next.set("sort", newSort);
+      return next;
     });
   }
 
@@ -164,8 +203,30 @@ function RequestTable() {
     return userId ?? "";
   }
 
+  const getBtnClass = (isActive: boolean) => (isActive ? "btn btn-primary bg-primary-subtle text-primary border-primary-subtle fw-medium" : "btn btn-outline-secondary bg-white text-secondary");
+
   return (
     <>
+      <div className="d-flex flex-row gap-2 mb-3">
+        <button type="button" className={getBtnClass(isEverything)} onClick={handleEverythingClick}>
+          Everything
+        </button>
+
+        {/* ✨ Plugged right in: Only shows if someone is actually logged in! */}
+        {user && (
+          <button type="button" className={getBtnClass(isSubmittedByYou)} onClick={handleSubmittedByYouClick}>
+            Submitted by you
+          </button>
+        )}
+
+        {/* ✨ Only shows for logged-in reviewers! */}
+        {user?.isReviewer && (
+          <button type="button" className={getBtnClass(isAwaitingReview)} onClick={handleAwaitingReviewClick}>
+            Awaiting your review
+          </button>
+        )}
+      </div>
+
       <div className="d-flex flex-row gap-3 mb-4 w-100 align-items-end">
         <div className="d-flex flex-column flex-grow-1">
           <label htmlFor="search" className="form-label text-secondary mb-1">
@@ -234,7 +295,7 @@ function RequestTable() {
           </select>
         </div>
 
-        <button type="button" className="btn btn-outline-secondary" onClick={handleClearFilters} disabled={!hasFilters}>
+        <button type="button" className="btn btn-outline-secondary bg-white" onClick={handleClearFilters} disabled={!hasFilters}>
           Clear filters
         </button>
       </div>
@@ -245,8 +306,11 @@ function RequestTable() {
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" className="mb-3 opacity-50" viewBox="0 0 16 16">
               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
             </svg>
-
             <p className="mb-0">No requests match "{searchTerm}". Try a different word, or clear the search.</p>
+          </div>
+        ) : requests.length === 0 && isAwaitingReview ? (
+          <div className="d-flex flex-column align-items-center justify-content-center text-secondary w-100 py-5">
+            <p className="mb-0">Nothing is waiting on you.</p>
           </div>
         ) : requests.length === 0 ? (
           <div className="d-flex flex-column align-items-center justify-content-center text-secondary w-100 py-5">
