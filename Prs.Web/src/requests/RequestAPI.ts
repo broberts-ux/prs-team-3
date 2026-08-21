@@ -4,22 +4,47 @@ import { IRequest } from "./IRequest";
 const url = `${BASE_URL}/requests`;
 
 export const requestAPI = {
-  list: async (status?: string, userId?: string, search?: string, sort?: string) => {
+  list: async (
+    status?: string,
+    userId?: string,
+    excludeUserId?: string,
+    search?: string,
+    sort?: string,
+  ) => {
     const params = new URLSearchParams();
+
     if (status && typeof status === "string") {
       params.append("status", status.toUpperCase());
     }
-    if (userId) params.append("userId", String(userId));
-    if (search && typeof search === "string") params.append("search", search);
-    if (sort && typeof sort === "string") params.append("sort", sort);
+
+    if (userId) {
+      params.append("userId", String(userId));
+    }
+
+    if (excludeUserId) {
+      params.append("excludeUserId", String(excludeUserId));
+    }
+
+    if (search && typeof search === "string") {
+      params.append("search", search);
+    }
+
+    if (sort && typeof sort === "string") {
+      params.append("sort", sort);
+    }
 
     const queryString = params.toString();
     const requestsUrl = queryString ? `${url}?${queryString}` : url;
-    return fetch(requestsUrl).then(checkStatus).then(parseJSON);
+
+    return fetch(requestsUrl)
+      .then(checkStatus)
+      .then(parseJSON);
   },
 
   find(id: number): Promise<IRequest> {
-    return fetch(`${url}/${id}`).then(checkStatus).then(parseJSON);
+    return fetch(`${url}/${id}`)
+      .then(checkStatus)
+      .then(parseJSON);
   },
 
   post(request: IRequest) {
@@ -47,7 +72,9 @@ export const requestAPI = {
   },
 
   delete(id: number) {
-    return fetch(`${url}/${id}`, { method: "DELETE" }).then(checkStatus);
+    return fetch(`${url}/${id}`, {
+      method: "DELETE",
+    }).then(checkStatus);
   },
 
   review(request: IRequest) {
