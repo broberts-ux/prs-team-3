@@ -11,7 +11,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useUserContext } from "../App";
 import { IRequestLine } from "../requestLines/IRequestLine";
 import { requestLineAPI } from "../requestLines/RequestLineAPI";
-import CommentSection from "../comments/CommentSection"; // ✨ Restored import!
+import CommentSection from "../comments/CommentSection";
 
 interface IRejectionForm {
   rejectionReason: string | undefined;
@@ -25,7 +25,6 @@ function RequestDetailPage() {
   const [request, setRequest] = useState<IRequest | undefined>(undefined);
   const [showModal, setShowModal] = useState(false);
 
-  // ✨ Restored comment count state!
   const [commentCount, setCommentCount] = useState(0);
 
   const { user: authenticatedUser } = useUserContext();
@@ -54,6 +53,22 @@ function RequestDetailPage() {
     } catch (error: any) {
       toast.error(error.message);
       throw new Error("There was an error loading the request");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function duplicateRequest() {
+    if (!request?.id || !authenticatedUser?.id) return;
+
+    setLoading(true);
+    try {
+      const newRequest = await requestAPI.duplicate(request.id, authenticatedUser.id);
+      toast.success("Request duplicated successfully!");
+      // Send them straight to the fresh copy!
+      navigate(`/requests/detail/${newRequest.id}`);
+    } catch (error: any) {
+      toast.error("Failed to duplicate request.");
     } finally {
       setLoading(false);
     }
@@ -126,7 +141,7 @@ function RequestDetailPage() {
 
   useEffect(() => {
     loadRequest();
-  }, []);
+  }, [id]);
 
   return (
     <section className="content container-fluid mx-5 my-2 py-4">
@@ -202,8 +217,14 @@ function RequestDetailPage() {
           )}
 
           <div className="d-flex gap-2">
-            <Link to={`/requests/edit/${request?.id}`} className="btn btn-outline">
-              <svg className="bi pe-none me-2" width={16} height={16} fill="#007AFF">
+            <button type="button" className="btn btn-outline-secondary" onClick={duplicateRequest} title="Duplicate Request">
+              <svg className="bi pe-none" width={16} height={16} fill="currentColor">
+                <use xlinkHref={`${bootstrapIcons}#copy`} />
+              </svg>
+            </button>
+
+            <Link to={`/requests/edit/${request?.id}`} className="btn btn-outline-primary">
+              <svg className="bi pe-none" width={16} height={16} fill="currentColor">
                 <use xlinkHref={`${bootstrapIcons}#pencil`} />
               </svg>
             </Link>

@@ -157,6 +157,38 @@ namespace Prs.Api.Controllers {
             return Ok(currentRequest);
         }
 
+        // POST: api/Requests/5/duplicate
+        [HttpPost("{id}/duplicate")]
+        public async Task<ActionResult<Request>> Duplicate(int id, [FromQuery] int userId) {
+            var originalRequest = await _db.Requests
+                                           .Include(r => r.RequestLines)
+                                           .SingleOrDefaultAsync(r => r.Id == id);
+
+            if (originalRequest == null) {
+                return NotFound();
+            }
+
+            var duplicateRequest = new Request {
+                Description = "Copy of " + originalRequest.Description,
+                Justification = originalRequest.Justification,
+                DeliveryMode = originalRequest.DeliveryMode,
+                Status = "NEW",
+                UserId = userId,
+                Total = originalRequest.Total, 
+                RejectionReason = null,
+                
+                RequestLines = originalRequest.RequestLines?.Select(rl => new RequestLine {
+                    ProductId = rl.ProductId,
+                    Quantity = rl.Quantity
+                }).ToList() ?? new List<RequestLine>()
+            };
+
+            _db.Requests.Add(duplicateRequest);
+            await _db.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetById), new { id = duplicateRequest.Id }, duplicateRequest);
+        }
+
         // DELETE: api/Requests/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id) {

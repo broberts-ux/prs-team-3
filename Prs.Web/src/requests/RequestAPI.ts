@@ -4,13 +4,7 @@ import { IRequest } from "./IRequest";
 const url = `${BASE_URL}/requests`;
 
 export const requestAPI = {
-  list: async (
-    status?: string,
-    userId?: string,
-    excludeUserId?: string,
-    search?: string,
-    sort?: string,
-  ) => {
+  list: async (status?: string, userId?: string, excludeUserId?: string, search?: string, sort?: string) => {
     const params = new URLSearchParams();
 
     if (status && typeof status === "string") {
@@ -36,15 +30,11 @@ export const requestAPI = {
     const queryString = params.toString();
     const requestsUrl = queryString ? `${url}?${queryString}` : url;
 
-    return fetch(requestsUrl)
-      .then(checkStatus)
-      .then(parseJSON);
+    return fetch(requestsUrl).then(checkStatus).then(parseJSON);
   },
 
   find(id: number): Promise<IRequest> {
-    return fetch(`${url}/${id}`)
-      .then(checkStatus)
-      .then(parseJSON);
+    return fetch(`${url}/${id}`).then(checkStatus).then(parseJSON);
   },
 
   post(request: IRequest) {
@@ -109,5 +99,15 @@ export const requestAPI = {
         "Content-Type": "application/json",
       },
     }).then(checkStatus);
+  },
+  duplicate: async (id: number, userId: number) => {
+    return fetch(`${url}/${id}/duplicate?userId=${userId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then(checkStatus)
+      .then(parseJSON);
   },
 };
