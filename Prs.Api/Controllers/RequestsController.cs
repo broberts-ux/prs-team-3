@@ -14,7 +14,7 @@ namespace Prs.Api.Controllers {
             _db = db;
         }
 
-        // GET: api/Requests
+// GET: api/Requests
         // GET: api/Requests?status=NEW
         // GET: api/Requests?userId=2
         // GET: api/Requests?search=laptop&sort=total_desc
@@ -22,6 +22,7 @@ namespace Prs.Api.Controllers {
         public async Task<ActionResult<IEnumerable<Request>>> GetAll(
             [FromQuery] string? status = null,
             [FromQuery] int? userId = null,
+            [FromQuery] int? excludeUserId = null, // ✨ Added to catch the query param!
             [FromQuery] string? search = null,
             [FromQuery] string? sort = null)
         {
@@ -33,9 +34,17 @@ namespace Prs.Api.Controllers {
             {
                 query = query.Where(request => request.Status == status);
             }
+            if (excludeUserId != null) {
+             query = query.Where(request => request.UserId != excludeUserId);
+            }
             if (userId != null)
             {
                 query = query.Where(request => request.UserId == userId);
+            }
+            if (excludeUserId != null)
+            {
+                // ✨ Excludes the signed-in reviewer's own requests!
+                query = query.Where(request => request.UserId != excludeUserId);
             }
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -155,6 +164,38 @@ namespace Prs.Api.Controllers {
             await _db.SaveChangesAsync();
 
             return Ok(currentRequest);
+        }
+
+        // POST: api/Requests/5/duplicate
+        [HttpPost("{id}/duplicate")]
+        public async Task<ActionResult<Request>> Duplicate(int id, [FromQuery] int userId) {
+            var originalRequest = await _db.Requests
+                                           .Include(r => r.RequestLines)
+                                           .SingleOrDefaultAsync(r => r.Id == id);
+
+            if (originalRequest == null) {
+                return NotFound();
+            }
+
+            var duplicateRequest = new Request {
+                Description = "Copy of " + originalRequest.Description,
+                Justification = originalRequest.Justification,
+                DeliveryMode = originalRequest.DeliveryMode,
+                Status = "NEW",
+                UserId = userId,
+                Total = originalRequest.Total, 
+                RejectionReason = null,
+                
+                RequestLines = originalRequest.RequestLines?.Select(rl => new RequestLine {
+                    ProductId = rl.ProductId,
+                    Quantity = rl.Quantity
+                }).ToList() ?? new List<RequestLine>()
+            };
+
+            _db.Requests.Add(duplicateRequest);
+            await _db.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetById), new { id = duplicateRequest.Id }, duplicateRequest);
         }
 
         // DELETE: api/Requests/5
