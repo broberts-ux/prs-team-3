@@ -11,6 +11,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useUserContext } from "../App";
 import { IRequestLine } from "../requestLines/IRequestLine";
 import { requestLineAPI } from "../requestLines/RequestLineAPI";
+import CommentSection from "../comments/CommentSection"; // ✨ Restored import!
 
 interface IRejectionForm {
   rejectionReason: string | undefined;
@@ -23,6 +24,9 @@ function RequestDetailPage() {
   const [loading, setLoading] = useState(false);
   const [request, setRequest] = useState<IRequest | undefined>(undefined);
   const [showModal, setShowModal] = useState(false);
+
+  // ✨ Restored comment count state!
+  const [commentCount, setCommentCount] = useState(0);
 
   const { user: authenticatedUser } = useUserContext();
 
@@ -43,9 +47,7 @@ function RequestDetailPage() {
 
   async function loadRequest() {
     let requestId = Number(id);
-
     setLoading(true);
-
     try {
       const request = await requestAPI.find(requestId);
       setRequest(request);
@@ -59,9 +61,7 @@ function RequestDetailPage() {
 
   async function review() {
     if (!request) return;
-
     setLoading(true);
-
     try {
       await requestAPI.review(request);
       toast.success("Successfully sent.");
@@ -71,15 +71,12 @@ function RequestDetailPage() {
     } finally {
       setLoading(false);
     }
-
     navigate("/requests");
   }
 
   async function approve() {
     if (!request) return;
-
     setLoading(true);
-
     try {
       await requestAPI.approve(request);
       toast.success("Successfully saved.");
@@ -89,7 +86,6 @@ function RequestDetailPage() {
     } finally {
       setLoading(false);
     }
-
     navigate("/requests");
   }
 
@@ -99,16 +95,13 @@ function RequestDetailPage() {
 
   const save: SubmitHandler<IRejectionForm> = async (form: IRejectionForm) => {
     if (!request?.id || !form.rejectionReason) return;
-
     await reject(request.id, form.rejectionReason);
-
     setShowModal(false);
     navigate("/requests");
   };
 
   async function reject(requestId: number, rejectionReason: string) {
     setLoading(true);
-
     try {
       await requestAPI.reject(requestId, rejectionReason);
       toast.success("Successfully saved.");
@@ -122,16 +115,12 @@ function RequestDetailPage() {
 
   async function removeLine(requestLine: IRequestLine) {
     if (!requestLine.id) return;
-
     await requestLineAPI.delete(requestLine.id);
-
     let requestWithLineRemoved = {
       ...request,
       requestLines: request?.requestLines.filter((l) => l.id !== requestLine.id),
     } as IRequest;
-
     setRequest(requestWithLineRemoved);
-
     toast.success("Successfully deleted.");
   }
 
@@ -145,31 +134,24 @@ function RequestDetailPage() {
         <Modal.Header closeButton>
           <Modal.Title>Reject</Modal.Title>
         </Modal.Header>
-
         <Modal.Body>
           <form onSubmit={handleSubmit(save)}>
             <div className="mb-3">
               <label className="form-label" htmlFor="rejectionReason">
                 Rejection Reason
               </label>
-
               <textarea
-                {...register("rejectionReason", {
-                  required: "Rejection reason is required",
-                })}
+                {...register("rejectionReason", { required: "Rejection reason is required" })}
                 className={`form-control ${errors?.rejectionReason && "is-invalid"}`}
                 id="rejectionReason"
                 rows={6}
               ></textarea>
-
               <div className="invalid-feedback">{errors?.rejectionReason?.message}</div>
             </div>
-
             <div className="d-flex justify-content-end gap-2">
               <button type="button" className="btn btn-outline-primary" onClick={handleCloseModal}>
                 Cancel
               </button>
-
               <button type="submit" className="btn btn-primary">
                 <svg className="bi pe-none me-2" width={16} height={16} fill="#FFFFFF">
                   <use xlinkHref={`${bootstrapIcons}#save`} />
@@ -181,12 +163,15 @@ function RequestDetailPage() {
         </Modal.Body>
       </Modal>
 
-      {request?.status === "REVIEW" && !userCanReview() && (
-        <div className="alert alert-warning">{authenticatedUser?.isReviewer ? "You are not allowed to review your own requests." : "You must be a reviewer to approve or reject requests."}</div>
-      )}
+      {request?.status === "REVIEW" && !userCanReview() && <div className="alert alert-warning fw-bold">{authenticatedUser?.isReviewer ? "Not yours to review." : "You aren't a reviewer."}</div>}
 
       <div className="d-flex justify-content-between pb-4 mb-4 border-bottom border-2">
-        <h2>Request</h2>
+        <div className="d-flex align-items-center">
+          <h2 className="mb-0">Request</h2>
+          <span className="badge bg-secondary-subtle text-secondary rounded-pill fs-6 ms-4 px-3 py-2">
+            {commentCount} {commentCount === 1 ? "comment" : "comments"}
+          </span>
+        </div>
 
         <div className="d-flex justify-content-end gap-2">
           {request?.status === "NEW" && (
@@ -231,6 +216,8 @@ function RequestDetailPage() {
       {request && <RequestHeader request={request} user={request.user} />}
 
       {request && <RequestLineTable requestId={request.id} requestLines={request.requestLines} onRemove={removeLine} />}
+
+      {request && <CommentSection requestId={request.id!} onCountChange={setCommentCount} />}
     </section>
   );
 }
