@@ -182,8 +182,9 @@ function RequestDetailPage() {
         </Modal.Body>
       </Modal>
 
-      {/* ✨ The updated Warning Box matching the Acceptance Criteria perfectly! */}
-      {request?.status === "REVIEW" && !userCanReview() && <div className="alert alert-warning fw-bold">{authenticatedUser?.isReviewer ? "Not yours to review." : "You aren't a reviewer."}</div>}
+      {request?.status === "REVIEW" && !userCanReview() && (
+        <div className="alert alert-warning">{authenticatedUser?.isReviewer ? "You are not allowed to review your own requests." : "You must be a reviewer to approve or reject requests."}</div>
+      )}
 
       <div className="d-flex justify-content-between pb-4 mb-4 border-bottom border-2">
         <h2>Request</h2>
@@ -200,7 +201,6 @@ function RequestDetailPage() {
 
           {request?.status === "REVIEW" && (
             <>
-              {/* ✨ Approve button correctly disables if they fail the predicate */}
               <button type="button" className="btn btn-primary" onClick={approve} disabled={!userCanReview()}>
                 <svg className="bi pe-none me-2" width={16} height={16} fill="#FFFFFF">
                   <use xlinkHref={`${bootstrapIcons}#hand-thumbs-up`} />
@@ -208,7 +208,6 @@ function RequestDetailPage() {
                 Approve
               </button>
 
-              {/* ✨ Reject button correctly disables if they fail the predicate */}
               <button type="button" className="btn btn-outline-danger" onClick={handleShowModal} disabled={!userCanReview()}>
                 <svg className="bi pe-none me-2" width={16} height={16} fill="currentColor">
                   <use xlinkHref={`${bootstrapIcons}#hand-thumbs-down`} />
