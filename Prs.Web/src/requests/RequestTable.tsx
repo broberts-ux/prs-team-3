@@ -20,36 +20,6 @@ function RequestTable() {
   const searchTerm = searchParams.get("search");
 
   useEffect(() => {
-    const currentParams = searchParams.toString();
-
-    if (currentParams) {
-      sessionStorage.setItem(FILTER_STORAGE_KEY, currentParams);
-    } else {
-      const rememberedFilters = sessionStorage.getItem(FILTER_STORAGE_KEY);
-
-      if (rememberedFilters) {
-        setSearchParams(new URLSearchParams(rememberedFilters), {
-          replace: true,
-        });
-      }
-    }
-
-    setFiltersInitialized(true);
-  }, []);
-
-  useEffect(() => {
-    if (!filtersInitialized) return;
-
-    const currentParams = searchParams.toString();
-
-    if (currentParams) {
-      sessionStorage.setItem(FILTER_STORAGE_KEY, currentParams);
-    } else {
-      sessionStorage.removeItem(FILTER_STORAGE_KEY);
-    }
-  }, [searchParams, filtersInitialized]);
-
-  useEffect(() => {
     async function loadUsers() {
       try {
         const data = await userAPI.list();
@@ -72,7 +42,6 @@ function RequestTable() {
         searchTerm ?? undefined,
         searchParams.get("sort") ?? undefined,
       );
-
       setRequests(data);
     } catch (error: any) {
       toast.error(error.message, { duration: 6000 });
@@ -84,7 +53,6 @@ function RequestTable() {
 
     loadRequests();
   }, [
-    filtersInitialized,
     searchParams.get("status"),
     searchParams.get("userId"),
     searchTerm,
@@ -111,14 +79,9 @@ function RequestTable() {
 
   function handleRequesterChange(event: SyntheticEvent) {
     const newUserId = (event.target as HTMLSelectElement).value;
-
     setSearchParams((prevParams) => {
-      if (newUserId) {
-        prevParams.set("userId", newUserId);
-      } else {
-        prevParams.delete("userId");
-      }
-
+      if (newUserId) prevParams.set("userId", newUserId);
+      else prevParams.delete("userId");
       return prevParams;
     });
   }
@@ -160,14 +123,10 @@ function RequestTable() {
 
   function getSortIndicator(column: string) {
     const sort = searchParams.get("sort");
-
     if (sort === `${column}_asc`) return " ↑";
     if (sort === `${column}_desc`) return " ↓";
-
     return "";
   }
-
-  const hasFilters = searchParams.toString().length > 0;
 
   return (
     <>
@@ -209,7 +168,6 @@ function RequestTable() {
           <label htmlFor="status" className="form-label text-secondary mb-1">
             Status
           </label>
-
           <select
             id="status"
             className="form-select"
@@ -228,7 +186,6 @@ function RequestTable() {
           <label htmlFor="userId" className="form-label text-secondary mb-1">
             Requested by
           </label>
-
           <select
             id="userId"
             className="form-select"
@@ -236,7 +193,6 @@ function RequestTable() {
             onChange={handleRequesterChange}
           >
             <option value="">Anyone</option>
-
             {user && (
               <option value={user.id}>
                 {user.firstName} {user.lastName} (you)
@@ -276,7 +232,6 @@ function RequestTable() {
             >
               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
             </svg>
-
             <p className="mb-0">
               No requests match "{searchTerm}". Try a different word, or clear
               the search.
@@ -291,6 +246,7 @@ function RequestTable() {
             <thead>
               <tr>
                 <th scope="col">#</th>
+
                 <th scope="col">Description</th>
 
                 <th
@@ -316,6 +272,7 @@ function RequestTable() {
                 </th>
 
                 <th scope="col">Requested By</th>
+
                 <th />
               </tr>
             </thead>
