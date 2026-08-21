@@ -7,9 +7,50 @@ import RequestRow from "./RequestRow";
 import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useUserContext } from "../App";
+import { IRequestLine } from "../requestLines/IRequestLine";
+import { requestLineAPI } from "../requestLines/RequestLineAPI";
+import CommentSection from "../comments/CommentSection";
 
 const FILTER_STORAGE_KEY = "requestFilters";
 
+function RequestDetailPage() {
+  let { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(false);
+  const [request, setRequest] = useState<IRequest | undefined>(undefined);
+  const [showModal, setShowModal] = useState(false);
+
+  const [commentCount, setCommentCount] = useState(0);
+
+  const { user: authenticatedUser } = useUserContext();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<IRejectionForm>({
+    defaultValues: async function () {
+      return Promise.resolve({
+        rejectionReason: undefined,
+      });
+    },
+  });
+
+  const handleCloseModal = () => setShowModal(false);
+  const handleShowModal = () => setShowModal(true);
+
+  async function loadRequest() {
+    let requestId = Number(id);
+    setLoading(true);
+    try {
+      const request = await requestAPI.find(requestId);
+      setRequest(request);
+    } catch (error: any) {
+      toast.error(error.message);
+      throw new Error("There was an error loading the request");
+    } finally {
+      setLoading(false);
 function RequestTable() {
   const { user } = useUserContext();
   const [requests, setRequests] = useState<IRequest[]>([]);
@@ -44,6 +85,33 @@ function RequestTable() {
       }
     }
 
+  async function duplicateRequest() {
+    if (!request?.id || !authenticatedUser?.id) return;
+
+    setLoading(true);
+    try {
+      const newRequest = await requestAPI.duplicate(request.id, authenticatedUser.id);
+      toast.success("Request duplicated successfully!");
+      // Send them straight to the fresh copy!
+      navigate(`/requests/detail/${newRequest.id}`);
+    } catch (error: any) {
+      toast.error("Failed to duplicate request.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function review() {
+    if (!request) return;
+    setLoading(true);
+    try {
+      await requestAPI.review(request);
+      toast.success("Successfully sent.");
+    } catch (error: any) {
+      toast.error(error.message);
+      throw new Error("An error occurred sending the request to be reviewed.");
+    } finally {
+      setLoading(false);
     setFiltersInitialized(true);
   }, []);
 
@@ -121,6 +189,9 @@ function RequestTable() {
     });
   }
 
+  useEffect(() => {
+    loadRequest();
+  }, [id]);
   // Dropdown Handlers
   function handleStatusChange(event: SyntheticEvent) {
     const newStatus = (event.target as HTMLSelectElement).value;
@@ -210,6 +281,44 @@ function RequestTable() {
           Everything
         </button>
 
+        <div className="d-flex justify-content-end gap-2">
+          {request?.status === "NEW" && (
+            <button type="button" className="btn btn-primary" onClick={review}>
+              <svg className="bi pe-none me-2" width={16} height={16} fill="#FFFFFF">
+                <use xlinkHref={`${bootstrapIcons}#person-check`} />
+              </svg>
+              Send for Review
+            </button>
+          )}
+
+          {request?.status === "REVIEW" && (
+            <>
+              <button type="button" className="btn btn-primary" onClick={approve} disabled={!userCanReview()}>
+                <svg className="bi pe-none me-2" width={16} height={16} fill="#FFFFFF">
+                  <use xlinkHref={`${bootstrapIcons}#hand-thumbs-up`} />
+                </svg>
+                Approve
+              </button>
+
+              <button type="button" className="btn btn-outline-danger" onClick={handleShowModal} disabled={!userCanReview()}>
+                <svg className="bi pe-none me-2" width={16} height={16} fill="currentColor">
+                  <use xlinkHref={`${bootstrapIcons}#hand-thumbs-down`} />
+                </svg>
+                Reject
+              </button>
+            </>
+          )}
+
+          <div className="d-flex gap-2">
+            <button type="button" className="btn btn-outline-secondary" onClick={duplicateRequest} title="Duplicate Request">
+              <svg className="bi pe-none" width={16} height={16} fill="currentColor">
+                <use xlinkHref={`${bootstrapIcons}#copy`} />
+              </svg>
+            </button>
+
+            <Link to={`/requests/edit/${request?.id}`} className="btn btn-outline-primary">
+              <svg className="bi pe-none" width={16} height={16} fill="currentColor">
+                <use xlinkHref={`${bootstrapIcons}#pencil`} />
         <button type="button" className={getBtnClass(isSubmittedByYou)} onClick={handleSubmittedByYouClick}>
           Submitted by you
         </button>
