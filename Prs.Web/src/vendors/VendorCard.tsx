@@ -1,24 +1,15 @@
 import bootstrapIcons from "../assets/bootstrap-icons.svg";
-
 import { Link } from "react-router-dom";
-
 import { IVendor } from "./IVendor";
-
 import Card from "react-bootstrap/Card";
-
 import ProgressBar from "react-bootstrap/ProgressBar";
-
 import Dropdown from "react-bootstrap/Dropdown";
-
 import { formatPhoneNumber } from "../utility/formatUtilities";
-
 import { vendorAPI } from "./VendorAPI";
-
 import toast from "react-hot-toast";
 
 interface IVendorCardProps {
   vendor: IVendor;
-
   onRemove: (vendor: IVendor) => void;
 }
 
@@ -30,7 +21,8 @@ function VendorCard({ vendor, onRemove }: IVendorCardProps) {
       <address className="py-4 px-4">
         <div className="d-flex justify-content-between align-items-center">
           <span>
-            <strong>{vendor.name}</strong> <br />
+            <strong>{vendor.name}</strong>
+            <br />
             <span className="badge bg-secondary">{vendor.code}</span>{" "}
           </span>
 
@@ -51,17 +43,11 @@ function VendorCard({ vendor, onRemove }: IVendorCardProps) {
             </Dropdown.Toggle>
 
             <Dropdown.Menu>
-              <Dropdown.Item
-                as={Link}
-                to={`/vendors/detail/${vendor.id}`}
-              >
+              <Dropdown.Item as={Link} to={`/vendors/detail/${vendor.id}`}>
                 Details
               </Dropdown.Item>
 
-              <Dropdown.Item
-                as={Link}
-                to={`/vendors/edit/${vendor.id}`}
-              >
+              <Dropdown.Item as={Link} to={`/vendors/edit/${vendor.id}`}>
                 Edit
               </Dropdown.Item>
 
@@ -74,9 +60,7 @@ function VendorCard({ vendor, onRemove }: IVendorCardProps) {
                   if (confirm("Are you sure you want to delete this vendor?")) {
                     if (vendor.id) {
                       await vendorAPI.delete(vendor.id);
-
                       onRemove(vendor);
-
                       toast.success("Successfully deleted.");
                     }
                   }
@@ -96,11 +80,17 @@ function VendorCard({ vendor, onRemove }: IVendorCardProps) {
           {vendor.city}, {vendor.state} {vendor.zip}
         </div>
 
-        <div className="text-secondary">
-          {formatPhoneNumber(vendor.phone)}
-        </div>
+        {vendor.phone && (
+          <div className="text-secondary">
+            {formatPhoneNumber(vendor.phone)}
+          </div>
+        )}
 
-        <div className="text-secondary">{vendor.email}</div>
+        {vendor.email && (
+          <div className="text-secondary">
+            <a href={`mailto:${vendor.email}`}>{vendor.email}</a>
+          </div>
+        )}
       </address>
     </Card>
   );
