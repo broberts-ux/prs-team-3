@@ -36,15 +36,48 @@ export const requestAPI = {
     const queryString = params.toString();
     const requestsUrl = queryString ? `${url}?${queryString}` : url;
 
-    return fetch(requestsUrl)
-      .then(checkStatus)
-      .then(parseJSON);
+    return fetch(requestsUrl).then(checkStatus).then(parseJSON);
+  },
+
+  exportCsv: async (
+    status?: string,
+    userId?: string,
+    excludeUserId?: string,
+    search?: string,
+    sort?: string,
+  ) => {
+    const params = new URLSearchParams();
+
+    if (status && typeof status === "string") {
+      params.append("status", status.toUpperCase());
+    }
+
+    if (userId) {
+      params.append("userId", String(userId));
+    }
+
+    if (excludeUserId) {
+      params.append("excludeUserId", String(excludeUserId));
+    }
+
+    if (search && typeof search === "string") {
+      params.append("search", search);
+    }
+
+    if (sort && typeof sort === "string") {
+      params.append("sort", sort);
+    }
+
+    const queryString = params.toString();
+    const exportUrl = queryString
+      ? `${url}/export?${queryString}`
+      : `${url}/export`;
+
+    return fetch(exportUrl).then(checkStatus);
   },
 
   find(id: number): Promise<IRequest> {
-    return fetch(`${url}/${id}`)
-      .then(checkStatus)
-      .then(parseJSON);
+    return fetch(`${url}/${id}`).then(checkStatus).then(parseJSON);
   },
 
   post(request: IRequest) {

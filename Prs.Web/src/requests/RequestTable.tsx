@@ -12,6 +12,7 @@ const FILTER_STORAGE_KEY = "requestFilters";
 
 function RequestTable() {
   const { user } = useUserContext();
+
   const [requests, setRequests] = useState<IRequest[]>([]);
   const [allUsers, setAllUsers] = useState<IUser[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -68,38 +69,29 @@ function RequestTable() {
     loadUsers();
   }, []);
 
-  async function loadRequests() {
-    try {
-      const data = await requestAPI.list(
-        searchParams.get("status") ?? undefined,
-        searchParams.get("userId") ?? undefined,
-        searchTerm ?? undefined,
-        searchParams.get("sort") ?? undefined,
-        status ?? undefined,
-        userId ?? undefined,
-        excludeUserId ?? undefined,
-        searchTerm ?? undefined,
-        sort ?? undefined,
-      );
-
-      setRequests(data);
-    } catch (error: any) {
-      toast.error(error.message, { duration: 6000 });
-    }
-  }
-
   useEffect(() => {
     if (!filtersInitialized) return;
 
+    async function loadRequests() {
+      try {
+        const data = await requestAPI.list(
+          status ?? undefined,
+          userId ?? undefined,
+          excludeUserId ?? undefined,
+          searchTerm ?? undefined,
+          sort ?? undefined,
+        );
+
+        setRequests(data);
+      } catch (error: any) {
+        toast.error(error.message, {
+          duration: 6000,
+        });
+      }
+    }
+
     loadRequests();
-  }, [
-    filtersInitialized,
-    searchParams.get("status"),
-    searchParams.get("userId"),
-    searchTerm,
-    searchParams.get("sort"),
-  ]);
-  }, [status, userId, excludeUserId, searchTerm, sort]);
+  }, [filtersInitialized, status, userId, excludeUserId, searchTerm, sort]);
 
   function removeRequest(request: IRequest) {
     setRequests(requests.filter((r) => r.id !== request.id));
@@ -120,13 +112,6 @@ function RequestTable() {
   }
 
   function handleRequesterChange(event: SyntheticEvent) {
-    const newUserId = (event.target as HTMLSelectElement).value;
-
-    setSearchParams((prevParams) => {
-      if (newUserId) {
-        prevParams.set("userId", newUserId);
-      } else {
-        prevParams.delete("userId");
     const selectedValue = (event.target as HTMLSelectElement).value;
 
     setSearchParams((prevParams) => {
@@ -179,10 +164,6 @@ function RequestTable() {
   }
 
   function getSortIndicator(column: string) {
-    const sort = searchParams.get("sort");
-
-    if (sort === `${column}_asc`) return " ↑";
-    if (sort === `${column}_desc`) return " ↓";
     const currentSort = searchParams.get("sort");
 
     if (currentSort === `${column}_asc`) {
@@ -196,7 +177,6 @@ function RequestTable() {
     return "";
   }
 
-  const hasFilters = searchParams.toString().length > 0;
   function getRequesterValue() {
     if (excludeUserId) {
       return "anyone-else";
@@ -205,14 +185,13 @@ function RequestTable() {
     return userId ?? "";
   }
 
+  const hasFilters = searchParams.toString().length > 0;
+
   return (
     <>
       <div className="d-flex flex-row gap-3 mb-4 w-100 align-items-end">
         <div className="d-flex flex-column flex-grow-1">
-          <label
-            htmlFor="search"
-            className="form-label text-secondary mb-1"
-          >
+          <label htmlFor="search" className="form-label text-secondary mb-1">
             Search
           </label>
 
@@ -244,21 +223,14 @@ function RequestTable() {
           </div>
         </div>
 
-        <div
-          className="d-flex flex-column"
-          style={{ width: "200px" }}
-        >
-          <label
-            htmlFor="status"
-            className="form-label text-secondary mb-1"
-          >
+        <div className="d-flex flex-column" style={{ width: "200px" }}>
+          <label htmlFor="status" className="form-label text-secondary mb-1">
             Status
           </label>
 
           <select
             id="status"
             className="form-select"
-            value={searchParams.get("status") ?? ""}
             value={status ?? ""}
             onChange={handleStatusChange}
           >
@@ -270,29 +242,20 @@ function RequestTable() {
           </select>
         </div>
 
-        <div
-          className="d-flex flex-column"
-          style={{ width: "250px" }}
-        >
-          <label
-            htmlFor="userId"
-            className="form-label text-secondary mb-1"
-          >
+        <div className="d-flex flex-column" style={{ width: "250px" }}>
+          <label htmlFor="userId" className="form-label text-secondary mb-1">
             Requested by
           </label>
 
           <select
             id="userId"
             className="form-select"
-            value={searchParams.get("userId") ?? ""}
             value={getRequesterValue()}
             onChange={handleRequesterChange}
           >
             <option value="">Anyone</option>
 
-            {user?.reviewer && (
-              <option value="anyone-else">Anyone else</option>
-            )}
+            {user?.reviewer && <option value="anyone-else">Anyone else</option>}
 
             {user && (
               <option value={user.id}>
@@ -318,6 +281,46 @@ function RequestTable() {
         >
           Clear filters
         </button>
+
+        <button
+          type="button"
+          className="btn btn-outline-primary"
+          onClick={async () => {
+            try {
+              const resp = await requestAPI.exportCsv(
+                status ?? undefined,
+                userId ?? undefined,
+                excludeUserId ?? undefined,
+                searchTerm ?? undefined,
+                sort ?? undefined,
+              );
+
+              const blob = await resp.blob();
+              const disp = resp.headers.get("content-disposition") || "";
+              let filename = "requests.csv";
+              const fnMatch = /filename\*?=(?:UTF-8'')?"?([^\";]+)"?/.exec(
+                disp,
+              );
+              if (fnMatch && fnMatch[1])
+                filename = decodeURIComponent(fnMatch[1]);
+
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.URL.revokeObjectURL(url);
+            } catch (error: any) {
+              toast.error("Could not export CSV: " + error.message, {
+                duration: 6000,
+              });
+            }
+          }}
+        >
+          Export CSV
+        </button>
       </div>
 
       <section className="list d-flex flex-row flex-wrap bg-body-tertiary gap-5 p-4 rounded-4">
@@ -337,8 +340,6 @@ function RequestTable() {
             <p className="mb-0">
               No requests match "{searchTerm}". Try a different word, or clear
               the search.
-              No requests match "{searchTerm}". Try a different word, or
-              clear the search.
             </p>
           </div>
         ) : requests.length === 0 ? (
@@ -346,7 +347,7 @@ function RequestTable() {
             <p className="mb-0">No requests found.</p>
           </div>
         ) : (
-          <table className="table table-hover w-100 table rounded-4 mb-0">
+          <table className="table table-hover w-100 rounded-4 mb-0">
             <thead>
               <tr>
                 <th scope="col">#</th>
