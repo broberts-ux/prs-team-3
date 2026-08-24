@@ -233,7 +233,7 @@ function RequestDetailPage() {
 
       {loading && <p>Loading...</p>}
 
-      {request && <RequestHeader request={request} user={request.user} />}
+      {request && <RequestHeader request={request} user={authenticatedUser} />}
 
       {request && <RequestLineTable requestId={request.id} requestLines={request.requestLines} onRemove={removeLine} />}
 
