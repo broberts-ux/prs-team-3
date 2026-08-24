@@ -1,19 +1,13 @@
-import {
-  BASE_URL,
-  checkStatus,
-  delay,
-  parseJSON,
-} from "../utility/fetchUtilities";
+import { BASE_URL, checkStatus, delay, parseJSON } from "../utility/fetchUtilities";
 import { IProduct } from "./IProduct";
 
 const url = `${BASE_URL}/products`;
 
 export const productAPI = {
-  list(): Promise<IProduct[]> {
-    return fetch(`${url}`)
-      .then(delay(200))
-      .then(checkStatus)
-      .then(parseJSON);
+  list(vendorId?: number): Promise<IProduct[]> {
+    const query = vendorId === undefined ? "" : `?vendorId=${vendorId}`;
+
+    return fetch(`${url}${query}`).then(delay(200)).then(checkStatus).then(parseJSON);
   },
 
   find(id: number): Promise<IProduct> {

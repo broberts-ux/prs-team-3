@@ -5,17 +5,21 @@ import { productAPI } from "./ProductAPI";
 import ProductCardSkeleton from "./ProductCardSkeleton";
 import toast from "react-hot-toast";
 
-function ProductList() {
+interface ProductListProps {
+  vendorId?: number;
+}
+
+function ProductList({ vendorId }: ProductListProps) {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<IProduct[]>([]);
-  const productCardSkeletons = Array.from(Array(12), (value, index) => {
+  const productCardSkeletons = Array.from(Array(12), (_, index) => {
     return <ProductCardSkeleton key={index} />;
   });
 
   async function loadProducts() {
     setLoading(true);
     try {
-      const data = await productAPI.list();
+      const data = await productAPI.list(vendorId);
       setProducts(data);
     } catch (error: any) {
       toast.error(error.message, { duration: 6000 });
@@ -26,7 +30,7 @@ function ProductList() {
 
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [vendorId]);
 
   function removeProduct(product: IProduct) {
     setProducts(products.filter((p) => p.id !== product.id));
@@ -37,11 +41,7 @@ function ProductList() {
       {loading && productCardSkeletons}
 
       {products.map((product) => (
-        <ProductCard
-          key={product.id}
-          product={product}
-          onRemove={removeProduct}
-        />
+        <ProductCard key={product.id} product={product} onRemove={removeProduct} />
       ))}
     </section>
   );
